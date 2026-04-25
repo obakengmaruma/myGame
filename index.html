@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { width:100%; height:100%; background:#000; color:#cce0ff; font-family:'Rajdhani',sans-serif; overflow:hidden; }
+        #gameCanvas { position:fixed; top:0; left:0; width:100%; height:100%; display:block; cursor:crosshair; }
+        #hud {
+            position:fixed; top:0; left:0; right:0;
+            display:flex; flex-direction:column; align-items:center;
+            pointer-events:none; z-index:10; padding-top:16px; gap:6px;
+        }
+        h1 {
+            font-family:'Orbitron',monospace; font-weight:900;
+            font-size:clamp(0.9rem,2.5vw,1.5rem); letter-spacing:0.28em; color:#fff;
+            text-shadow:0 0 20px rgba(100,160,255,.9),0 0 50px rgba(80,120,255,.5);
+        }
+        #sbar { display:flex; gap:14px; align-items:center; }
+        .pill {
+            font-family:'Orbitron',monospace; font-size:0.72rem; letter-spacing:0.1em;
+            background:rgba(8,14,40,.82); border:1px solid rgba(80,130,255,.28);
+            padding:5px 16px; border-radius:3px; backdrop-filter:blur(10px);
+        }
+        #st { color:#88bbff; } #sc { color:#aaccff; }
+        #fl {
+            font-family:'Orbitron',monospace; font-size:clamp(.65rem,1.8vw,.88rem);
+            letter-spacing:0.22em; padding:4px 20px; border-radius:2px; border:1px solid;
+            backdrop-filter:blur(8px); transition:color .5s,border-color .5s,box-shadow .5s;
+        }
+        #wm {
+            font-family:'Orbitron',monospace; font-size:clamp(.75rem,2vw,1rem);
+            font-weight:700; letter-spacing:0.18em; color:#ffdd44;
+            text-shadow:0 0 24px rgba(255,220,50,.9); min-height:22px;
+        }
+        #ctrl {
+            position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+            display:flex; gap:10px; z-index:10;
+        }
+        button {
+            font-family:'Orbitron',monospace; font-size:.62rem; font-weight:700;
+            letter-spacing:.14em; text-transform:uppercase;
+            background:rgba(8,14,40,.82); border:1px solid rgba(100,160,255,.3);
+            color:#88bbff; padding:8px 18px; border-radius:3px; cursor:pointer;
+            transition:all .18s; backdrop-filter:blur(8px); pointer-events:all;
+        }
+        button:hover { background:rgba(60,100,220,.25); border-color:rgba(140,190,255,.75); color:#fff; box-shadow:0 0 14px rgba(80,130,255,.3); }
+        #hint {
+            position:fixed; bottom:62px; left:50%; transform:translateX(-50%);
+            font-size:.66rem; color:rgba(140,170,220,.35); letter-spacing:.08em;
+            white-space:nowrap; pointer-events:none; z-index:10;
+        }
+ 
+        /* ── GAME OVER OVERLAY ── */
+        #gameover {
+            position:fixed; inset:0; z-index:100;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px;
+            background:rgba(0,0,0,0);
+            pointer-events:none;
+            transition:background .8s ease;
+        }
+        #gameover.visible {
+            background:rgba(0,0,6,0.87);
+            pointer-events:all;
+        }
+        #gameover.visible #go-inner {
+            opacity:1;
+            transform:translateY(0) scale(1);
+        }
+        #go-inner {
+            display:flex; flex-direction:column; align-items:center; gap:22px;
+            opacity:0;
+            transform:translateY(30px) scale(0.95);
+            transition:opacity .7s ease .3s, transform .7s ease .3s;
+        }
+        #go-label {
+            font-family:'Orbitron',monospace; font-size:clamp(.7rem,2vw,.85rem);
+            letter-spacing:.35em; color:rgba(180,200,255,.5);
+            text-transform:uppercase;
+        }
+        #go-winner {
+            font-family:'Orbitron',monospace; font-weight:900;
+            font-size:clamp(2rem,8vw,5rem); letter-spacing:.12em;
+            color:#fff; line-height:1;
+            text-shadow:
+                0 0 30px rgba(100,160,255,1),
+                0 0 80px rgba(80,120,255,.7),
+                0 0 160px rgba(60,90,255,.4);
+        }
+        #go-winner.tie {
+            color:#ffdd44;
+            text-shadow:
+                0 0 30px rgba(255,220,50,1),
+                0 0 80px rgba(255,180,0,.7),
+                0 0 160px rgba(255,140,0,.3);
+        }
+        #go-score {
+            font-family:'Orbitron',monospace; font-size:clamp(.9rem,2.5vw,1.2rem);
+            letter-spacing:.2em; color:#aaccff;
+            background:rgba(8,14,40,.7); border:1px solid rgba(80,130,255,.3);
+            padding:10px 32px; border-radius:3px; backdrop-filter:blur(10px);
+        }
+        #go-btn {
+            font-family:'Orbitron',monospace; font-size:.75rem; font-weight:700;
+            letter-spacing:.2em; text-transform:uppercase;
+            background:rgba(8,14,40,.9); border:1px solid rgba(100,160,255,.5);
+            color:#88bbff; padding:14px 40px; border-radius:3px; cursor:pointer;
+            transition:all .2s; backdrop-filter:blur(8px);
+            margin-top:8px;
+        }
+        #go-btn:hover {
+            background:rgba(60,100,220,.35);
+            border-color:rgba(140,190,255,.9);
+            color:#fff;
+            box-shadow:0 0 28px rgba(80,130,255,.5), 0 0 60px rgba(80,130,255,.2);
+        }
+ 
+        /* ── MUTE BUTTON ── */
+        #muteBtn {
+            position:fixed; top:16px; right:20px; z-index:20;
+            font-family:'Orbitron',monospace; font-size:.6rem; font-weight:700;
+            letter-spacing:.14em; text-transform:uppercase;
+            background:rgba(8,14,40,.82); border:1px solid rgba(80,130,255,.28);
+            color:#88bbff; padding:7px 14px; border-radius:3px; cursor:pointer;
+            transition:all .18s; backdrop-filter:blur(10px);
+        }
+        #muteBtn:hover { border-color:rgba(140,190,255,.75); color:#fff; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+ 
+    <button id="muteBtn" onclick="toggleMute()">♪ Mute</button>
+ 
+    <div id="hud">
+        <h1>3D Matrix Tic Tac Toe</h1>
+        <div id="sbar">
+            <div class="pill" id="st">Player 1 (X)</div>
+            <div class="pill" id="sc">P1: 0 &nbsp;|&nbsp; P2: 0</div>
+        </div>
+        <div id="fl">FACE 1 — FRONT</div>
+        <div id="wm"></div>
+    </div>
+ 
+    <div id="hint">Click a cell to place your mark &nbsp;·&nbsp; Space to reset</div>
+ 
+    <div id="ctrl">
+        <button onclick="resetGame()">↺ &nbsp;Restart</button>
+    </div>
+ 
+    <!-- BACKGROUND MUSIC -->
+    <audio id="bgm" loop>
+        <source src="Jack Harlow - Prague.mp3" type="audio/mpeg">
+    </audio>
+ 
+    <!-- GAME OVER OVERLAY -->
+    <div id="gameover">
+        <div id="go-inner">
+            <div id="go-label">Game Over</div>
+            <div id="go-winner"></div>
+            <div id="go-score"></div>
+            <button id="go-btn" onclick="hideGameOver(); resetGame();">↺ &nbsp;Play Again</button>
+        </div>
+    </div>
+ 
+    <script src="gamelogic.js"></script>
+    <script>
+        // ── MUSIC ──
+        const bgm = document.getElementById('bgm');
+        bgm.volume = 0.5;
+ 
+        // browsers block autoplay until the user interacts — start on first click/key
+        function startMusic() {
+            bgm.play().catch(() => {});
+            window.removeEventListener('click', startMusic);
+            window.removeEventListener('keydown', startMusic);
+        }
+        window.addEventListener('click', startMusic);
+        window.addEventListener('keydown', startMusic);
+ 
+        function toggleMute() {
+            bgm.muted = !bgm.muted;
+            document.getElementById('muteBtn').textContent = bgm.muted ? '♪ Unmute' : '♪ Mute';
+        }
+ 
+        function showGameOver(p1, p2) {
+            const overlay = document.getElementById('gameover');
+            const winner  = document.getElementById('go-winner');
+            const score   = document.getElementById('go-score');
+ 
+            score.textContent = 'P1: ' + p1 + '   |   P2: ' + p2;
+ 
+            if (p1 > p2) {
+                winner.textContent = 'Player 1 Wins';
+                winner.className = '';
+            } else if (p2 > p1) {
+                winner.textContent = 'Player 2 Wins';
+                winner.className = '';
+            } else {
+                winner.textContent = "It's a Tie";
+                winner.className = 'tie';
+            }
+ 
+            requestAnimationFrame(() => overlay.classList.add('visible'));
+        }
+ 
+        function hideGameOver() {
+            document.getElementById('gameover').classList.remove('visible');
+        }
+    </script>
+</body>
+</html>
