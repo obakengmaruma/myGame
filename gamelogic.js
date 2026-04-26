@@ -18,21 +18,36 @@ const VS = `
   attribute float aA;
   uniform mat4 uMVP;
   varying float vA;
-  void main(){ vA=aA; gl_Position=uMVP*vec4(aPos,1.0); }`;
+  
+  
+  void main(){ 
+  vA=aA;
+   gl_Position=uMVP*vec4(aPos,1.0);
+    }`;
 const FS = `
   precision mediump float;
   uniform vec4 uCol;
   varying float vA;
-  void main(){ gl_FragColor=vec4(uCol.rgb,uCol.a*vA); }`;
+  void main(){ 
+  gl_FragColor=vec4(uCol.rgb,uCol.a*vA);
+   }`;
 const BGV = `
-  attribute vec2 aPos; varying vec2 vU;
-  void main(){ vU=aPos*.5+.5; gl_Position=vec4(aPos,.999,1.); }`;
+  attribute vec2 aPos; 
+  varying vec2 vU;
+  void main(){ 
+            vU=aPos*.5+.5;
+            gl_Position=vec4(aPos,.999,1.); 
+   }`;
 const BGF = `
   precision mediump float;
-  varying vec2 vU; uniform vec2 uR; uniform vec3 uT;
+  varying vec2 vU;
+   uniform vec2 uR;
+    uniform vec3 uT;
   void main(){
-    vec2 c=(vU-.5)*vec2(uR.x/uR.y,1.); float g=exp(-dot(c,c)*2.8)*.22;
-    gl_FragColor=vec4(uT*g,1.); }`;
+    vec2 c=(vU-.5)*vec2(uR.x/uR.y,1.);
+     float g=exp(-dot(c,c)*2.8)*.22;
+    gl_FragColor=vec4(uT*g,1.); 
+    }`;
 
 // texture shaders
 const TVS = `
@@ -40,7 +55,10 @@ const TVS = `
   attribute vec2 aUV;
   uniform mat4 uMVP;
   varying vec2 vUV;
-  void main(){ vUV=aUV; gl_Position=uMVP*vec4(aPos,1.0); }`;
+  void main(){  
+   vUV=aUV; 
+    gl_Position=uMVP*vec4(aPos,1.0);
+     }`;
 const TFS = `
   precision mediump float;
   uniform sampler2D uTex;
@@ -50,30 +68,88 @@ const TFS = `
     vec4 t=texture2D(uTex,vUV);
     gl_FragColor=vec4(t.rgb,t.a*uAlpha); }`;
 
-function mkS(src, type) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
-function mkP(vs, fs) { const p = gl.createProgram(); gl.attachShader(p, mkS(vs, gl.VERTEX_SHADER)); gl.attachShader(p, mkS(fs, gl.FRAGMENT_SHADER)); gl.linkProgram(p); return p; }
+function mkS(src, type) {
+     const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+       gl.compileShader(s);
+        return s;
+     }
+function mkP(vs, fs) { 
+    const p = gl.createProgram();
+     gl.attachShader(p, mkS(vs, gl.VERTEX_SHADER)); 
+     gl.attachShader(p, mkS(fs, gl.FRAGMENT_SHADER)); 
+     gl.linkProgram(p); 
+     return p;
+     }
 const P = mkP(VS, FS), PB = mkP(BGV, BGF), PT = mkP(TVS, TFS);
 
 // ─────────────────────────────────────────────────────
 //  MATRIX MATH (column-major)
 // ─────────────────────────────────────────────────────
 const M = {
-    id: () => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]),
-    mul(a, b) { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[j + k * 4] * b[k + i * 4]; o[j + i * 4] = s; } return o; },
-    rx(a) { const c = Math.cos(a), s = Math.sin(a); return new Float32Array([1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]); },
-    ry(a) { const c = Math.cos(a), s = Math.sin(a); return new Float32Array([c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]); },
-    tr(x, y, z) { return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1]); },
-    sc(s) { return new Float32Array([s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 0, 0, 0, 1]); },
-    persp(fov, asp, n, f) { const t = 1 / Math.tan(fov / 2), nf = 1 / (n - f); return new Float32Array([t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) * nf, -1, 0, 0, 2 * f * n * nf, 0]); }
+    id: () => new Float32Array([1, 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0,
+                                0, 0, 0, 1]),
+    mul(a, b) { 
+        const o = new Float32Array(16); 
+        for (let i = 0; i < 4; i++) 
+            for (let j = 0; j < 4; j++) {
+         let s = 0; for (let k = 0; k < 4; k++) 
+            s += a[j + k * 4] * b[k + i * 4]; 
+         o[j + i * 4] = s; 
+        }
+         return o;
+         },
+    rx(a) {
+         const c = Math.cos(a), s = Math.sin(a);
+          return new Float32Array([1, 0, 0, 0,
+                                   0, c, s, 0,
+                                   0, -s, c, 0,
+                                   0, 0, 0, 1]); 
+        },
+    ry(a) {
+         const c = Math.cos(a), s = Math.sin(a); 
+         return new Float32Array([c, 0, -s, 0,
+                                  0, 1, 0, 0, 
+                                  s, 0, c, 0,
+                                   0, 0, 0, 1]);
+         },
+    tr(x, y, z) { return new Float32Array([1, 0, 0, 0,
+                                           0, 1, 0, 0,
+                                           0, 0, 1, 0,
+                                           x, y, z, 1]); },
+    sc(s) { return new Float32Array([s, 0, 0, 0,
+                                      0, s, 0, 0,
+                                      0, 0, s, 0,
+                                      0, 0, 0, 1]); },
+    persp(fov, asp, n, f) { 
+        const t = 1 / Math.tan(fov / 2), nf = 1 / (n - f); 
+        return new Float32Array([t / asp, 0, 0, 0,
+                                  0, t, 0, 0,
+                                0, 0, (f + n) * nf, -1,                                                     
+                                0, 0, 2 * f * n * nf, 0]); }
 };
 
 // ─────────────────────────────────────────────────────
 //  BUFFERS
 // ─────────────────────────────────────────────────────
-function vb(d) { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(d), gl.STATIC_DRAW); return b; }
-function ib(d) { const b = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(d), gl.STATIC_DRAW); return b; }
+function vb(d) {
+     const b = gl.createBuffer(); 
+     gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(d), gl.STATIC_DRAW); 
+      return b; }
+function ib(d) {
+     const b = gl.createBuffer(); 
+     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b); 
+     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, 
+        new Uint16Array(d), gl.STATIC_DRAW); 
+        return b; 
+    }
 
-const bgVB = vb([-1, -1, 1, -1, 1, 1, -1, 1]), bgIB = ib([0, 1, 2, 0, 2, 3]);
+const bgVB = vb([-1, -1, 1, -1,
+                 1, 1, -1, 1]), 
+                 bgIB = ib([0, 1, 2, 0, 2, 3]);
 
 // ─────────────────────────────────────────────────────
 //  CUBE GEOMETRY
@@ -151,8 +227,14 @@ function makeFaceTex(r, g, b) {
     ctx.lineWidth = 1.5;
     for (let i = 1; i <= 2; i++) {
         const t = (i / 3) * sz;
-        ctx.beginPath(); ctx.moveTo(t, 0); ctx.lineTo(t, sz); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, t); ctx.lineTo(sz, t); ctx.stroke();
+        ctx.beginPath(); 
+        ctx.moveTo(t, 0); 
+        ctx.lineTo(t, sz); 
+        ctx.stroke();
+        ctx.beginPath(); 
+        ctx.moveTo(0, t); 
+        ctx.lineTo(sz, t); 
+        ctx.stroke();
     }
 
     ctx.strokeStyle = `rgba(${Math.floor(r*255)},${Math.floor(g*255)},${Math.floor(b*255)},0.5)`;
@@ -235,8 +317,14 @@ function mkX(s) {
     for (const [dx,dy] of [[1,1],[-1,1]]) {
         const ax=-s*dx, ay=-s*dy, bx=s*dx, by=s*dy;
         const [px,py]=[-dy*hw,dx*hw], [gx,gy]=[-dy*gh,dx*gh];
-        V.push(ax+px,ay+py,0, ax-px,ay-py,0, bx-px,by-py,0, bx+px,by+py,0); A.push(1,1,1,1); I.push(vi,vi+1,vi+2,vi,vi+2,vi+3); vi+=4;
-        V.push(ax+gx,ay+gy,0, ax-gx,ay-gy,0, bx-gx,by-gy,0, bx+gx,by+gy,0); A.push(0,.4,.4,0); I.push(vi,vi+1,vi+2,vi,vi+2,vi+3); vi+=4;
+        V.push(ax+px,ay+py,0, ax-px,ay-py,0, bx-px,by-py,0, bx+px,by+py,0); 
+        A.push(1,1,1,1); 
+        I.push(vi,vi+1,vi+2,vi,vi+2,vi+3); 
+        vi+=4;
+        V.push(ax+gx,ay+gy,0, ax-gx,ay-gy,0, bx-gx,by-gy,0, bx+gx,by+gy,0); 
+        A.push(0,.4,.4,0); 
+        I.push(vi,vi+1,vi+2,vi,vi+2,vi+3); 
+        vi+=4;
     }
     return { vb:vb(V), ab:vb(A), ib:ib(I), n:I.length };
 }
@@ -246,8 +334,14 @@ function mkO(r) {
     for (let i=0; i<sg; i++) {
         const a0=(i/sg)*Math.PI*2, a1=((i+1)/sg)*Math.PI*2;
         const c0=Math.cos(a0), s0=Math.sin(a0), c1=Math.cos(a1), s1=Math.sin(a1);
-        V.push(c0*(r+hw),s0*(r+hw),0, c0*(r-hw),s0*(r-hw),0, c1*(r-hw),s1*(r-hw),0, c1*(r+hw),s1*(r+hw),0); A.push(1,1,1,1); I.push(vi,vi+1,vi+2,vi,vi+2,vi+3); vi+=4;
-        V.push(c0*(r+gh),s0*(r+gh),0, c0*(r-gh),s0*(r-gh),0, c1*(r-gh),s1*(r-gh),0, c1*(r+gh),s1*(r+gh),0); A.push(0,.35,.35,0); I.push(vi,vi+1,vi+2,vi,vi+2,vi+3); vi+=4;
+        V.push(c0*(r+hw),s0*(r+hw),0, c0*(r-hw),s0*(r-hw),0, c1*(r-hw),s1*(r-hw),0, c1*(r+hw),s1*(r+hw),0);
+         A.push(1,1,1,1);
+          I.push(vi,vi+1,vi+2,vi,vi+2,vi+3); 
+          vi+=4;
+        V.push(c0*(r+gh),s0*(r+gh),0, c0*(r-gh),s0*(r-gh),0, c1*(r-gh),s1*(r-gh),0, c1*(r+gh),s1*(r+gh),0); 
+        A.push(0,.35,.35,0); 
+        I.push(vi,vi+1,vi+2,vi,vi+2,vi+3); 
+        vi+=4;
     }
     return { vb:vb(V), ab:vb(A), ib:ib(I), n:I.length };
 }
@@ -291,7 +385,8 @@ function playWin() {
     const notes=[523,659,784,1047];
     notes.forEach((freq,i)=>{
         const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.connect(gain); 
+        gain.connect(audioCtx.destination);
         osc.type='sine';
         const start=audioCtx.currentTime+i*0.12;
         osc.frequency.setValueAtTime(freq, start);
@@ -306,11 +401,21 @@ function playWin() {
 //  DRAW HELPERS
 // ─────────────────────────────────────────────────────
 function bindV(g) {
-    const aP=gl.getAttribLocation(P,'aPos'); gl.bindBuffer(gl.ARRAY_BUFFER,g.vb); gl.enableVertexAttribArray(aP); gl.vertexAttribPointer(aP,3,gl.FLOAT,false,0,0);
-    const aA=gl.getAttribLocation(P,'aA');  gl.bindBuffer(gl.ARRAY_BUFFER,g.ab); gl.enableVertexAttribArray(aA);  gl.vertexAttribPointer(aA,1,gl.FLOAT,false,0,0);
+    const aP=gl.getAttribLocation(P,'aPos');
+     gl.bindBuffer(gl.ARRAY_BUFFER,g.vb); 
+     gl.enableVertexAttribArray(aP);
+     gl.vertexAttribPointer(aP,3,gl.FLOAT,false,0,0);
+    const aA=gl.getAttribLocation(P,'aA');  
+    gl.bindBuffer(gl.ARRAY_BUFFER,g.ab); 
+    gl.enableVertexAttribArray(aA);  
+    gl.vertexAttribPointer(aA,1,gl.FLOAT,false,0,0);
 }
-function setMVP(m) { gl.uniformMatrix4fv(gl.getUniformLocation(P,'uMVP'),false,m); }
-function setCol(r,g,b,a) { gl.uniform4fv(gl.getUniformLocation(P,'uCol'),[r,g,b,a]); }
+function setMVP(m) {
+     gl.uniformMatrix4fv(gl.getUniformLocation(P,'uMVP'),false,m);
+     }
+function setCol(r,g,b,a) { 
+    gl.uniform4fv(gl.getUniformLocation(P,'uCol'),[r,g,b,a]); 
+}
 
 function buildVP() {
     const asp=canvas.width/canvas.height;
@@ -354,7 +459,10 @@ function render(ts) {
 
     gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
     gl.useProgram(PB);
-    const bp=gl.getAttribLocation(PB,'aPos'); gl.bindBuffer(gl.ARRAY_BUFFER,bgVB); gl.enableVertexAttribArray(bp); gl.vertexAttribPointer(bp,2,gl.FLOAT,false,0,0);
+    const bp=gl.getAttribLocation(PB,'aPos'); 
+    gl.bindBuffer(gl.ARRAY_BUFFER,bgVB); 
+    gl.enableVertexAttribArray(bp); 
+    gl.vertexAttribPointer(bp,2,gl.FLOAT,false,0,0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,bgIB);
     gl.uniform2fv(gl.getUniformLocation(PB,'uR'),[W,H]);
     gl.uniform3fv(gl.getUniformLocation(PB,'uT'),cfg.tint);
@@ -423,7 +531,7 @@ function proj4(VP,x,y,z) {
 }
 
 canvas.addEventListener('click',e=>{
-    // Resume audio context if it's suspended to comply with browser autoplay policies
+    
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
     }
@@ -443,7 +551,12 @@ canvas.addEventListener('click',e=>{
     if (best&&bd<.35) place(best.r,best.c);
 });
 
-document.addEventListener('keydown',e=>{ if(e.key===' '){e.preventDefault();resetGame();} });
+document.addEventListener('keydown',e=>{ 
+    if(e.key===' '){
+        e.preventDefault();
+        resetGame();
+    } 
+});
 
 // ─────────────────────────────────────────────────────
 //  GAME LOGIC
@@ -491,7 +604,7 @@ function nextRound() {
     }
 }
 
-// Added the missing game over function here
+
 function showGameOver(p1Score, p2Score) {
     const wm = document.getElementById('wm');
     if (p1Score > p2Score) {
@@ -503,19 +616,31 @@ function showGameOver(p1Score, p2Score) {
     }
 }
 
-function updSt() { document.getElementById('st').textContent=`Player ${player} (${player===1?'X':'O'})`; }
-function updSc() { document.getElementById('sc').textContent=`P1: ${scores.p1}\u00a0\u00a0|\u00a0\u00a0P2: ${scores.p2}`; }
+function updSt() { 
+    document.getElementById('st').textContent=`Player ${player} (${player===1?'X':'O'})`; 
+}
+function updSc() { 
+    document.getElementById('sc').textContent=`P1: ${scores.p1}\u00a0\u00a0|\u00a0\u00a0P2: ${scores.p2}`;
+ }
 function updFL() {
     const cfg=FCFG[face], el=document.getElementById('fl');
-    el.textContent=cfg.name; el.style.color=cfg.lbl;
-    el.style.borderColor=cfg.brd; el.style.boxShadow=`0 0 18px ${cfg.brd}`;
+    el.textContent=cfg.name;
+     el.style.color=cfg.lbl;
+    el.style.borderColor=cfg.brd;
+     el.style.boxShadow=`0 0 18px ${cfg.brd}`;
     el.style.background='rgba(0,0,0,.6)';
 }
 
 function resetGame() {
     board=[0,1,2,3,4,5].map(()=>Array(9).fill(0));
-    face=0; player=1; scores={p1:0,p2:0}; wins=[]; over=false; gover=false;
-    tRX=CAM[0].rx; tRY=CAM[0].ry;
+    face=0;
+    player=1;
+    scores={p1:0,p2:0};
+    wins=[];
+    over=false;
+    gover=false;
+    tRX=CAM[0].rx;
+    tRY=CAM[0].ry;
     document.getElementById('wm').textContent='';
     updSt(); updSc(); updFL();
 }
@@ -524,7 +649,11 @@ function resetGame() {
 //  START
 // ─────────────────────────────────────────────────────
 gl.clearColor(0,0,0,1);
-tRX=CAM[0].rx; tRY=CAM[0].ry;
-cRX=CAM[0].rx; cRY=CAM[0].ry;
-updSt(); updSc(); updFL();
+tRX=CAM[0].rx;
+tRY=CAM[0].ry;
+cRX=CAM[0].rx;
+cRY=CAM[0].ry;
+updSt();
+updSc();
+updFL();
 requestAnimationFrame(render);
