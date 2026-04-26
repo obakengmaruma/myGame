@@ -456,6 +456,7 @@ function render(ts) {
     cRY+=(tRY-cRY)*.05;
 
     const W=canvas.width, H=canvas.height, cfg=FCFG[face];
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
     gl.useProgram(PB);
@@ -475,7 +476,7 @@ function render(ts) {
 
     gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
     for (const f of ord) {
-        const alpha=f===face?0.92:0.55;
+        const alpha=f===face?0.92:0.92;
         drawTexFace(FQ[f],FTEX[f],VP,alpha);
     }
 
